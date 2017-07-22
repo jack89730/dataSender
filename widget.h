@@ -31,8 +31,16 @@ private slots:
 
     void on_btn_startSend_clicked();
 
+    void on_checkBox_intervalSend_clicked();
+
+    void on_btn_stopSend_clicked();
+
+    void on_checkBox_repeatSend_clicked();
+
 private:
     bool openFile(const QString &fileName);
+    qint32 sendFile();
+    void statusChange();
 
 protected:
     virtual void timerEvent(QTimerEvent *event);
@@ -47,6 +55,11 @@ private:
     qint32 m_sendInterval;
     QFile m_file;
     QDataStream m_inStream;
+    qint32 m_timerId;
+    bool  m_isIntervalSend;
+    bool m_isSending;
+    bool m_isFileOpened;
+    bool m_isRepeatSend;
 
     static const qint32 defaultPackageLength;
     static const qint32 defaultPortNumber;

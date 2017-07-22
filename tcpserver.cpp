@@ -44,8 +44,10 @@ void TcpServer::processNewConnection()
 
 void TcpServer::sendDataToAllClients(const char *v_data, qint32 v_dataLength)
 {
+   // qint32 retVal = 0;
     for(QTcpSocket *tcpSocket : m_connectedSockets)
     {
         tcpSocket->write(v_data, v_dataLength);
+
     }
 }
