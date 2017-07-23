@@ -2,6 +2,7 @@
 #include "ui_mainWindow.h"
 #include <QFileDialog>
 #include "common.h"
+#include <QDateTime>
 
 const qint32 Widget::defaultPackageLength = 512;
 const qint32 Widget::defaultPortNumber = 0;
@@ -22,6 +23,7 @@ Widget::Widget(QWidget *parent) :
     ui->setupUi(this);
     m_fileName = QString();
     ui->btn_startListen->setEnabled(false);
+
     statusChange();
 }
 
@@ -113,6 +115,7 @@ void Widget::on_btn_openFile_clicked()
             ui->lineEdit_openedFile->setText(m_fileName);
             m_inStream.setDevice(&m_file);
 
+            createFile();
             statusChange();
         }
     }
@@ -177,6 +180,12 @@ qint32 Widget::sendFile()
        }
    }
 
+   /*
+    * 将发送的数据存储到本地
+*/
+   QDataStream out(&m_fileSendedData);
+   out.writeRawData(ch, readLength);
+   m_fileSendedData.flush();
    m_tcpServer->sendDataToAllClients(ch, readLength);
 
 
@@ -220,6 +229,18 @@ void Widget::statusChange()
     {
         ui->btn_startSend->setEnabled(false);
         ui->btn_stopSend->setEnabled(false);
+    }
+}
+
+void Widget::createFile()
+{
+    m_fileSendedData.close();
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QString fileName = dateTime.toString(QString("yyyyMMddHHmmss"));
+    m_fileSendedData.setFileName(fileName+".txt");
+    if(!m_fileSendedData.open(QIODevice::WriteOnly))
+    {
+        showWarningBox(tr("警告"), tr("创建用于存储发送数据的文件失败!"));
     }
 }
 

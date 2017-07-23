@@ -41,6 +41,7 @@ private:
     bool openFile(const QString &fileName);
     qint32 sendFile();
     void statusChange();
+    void createFile();
 
 protected:
     virtual void timerEvent(QTimerEvent *event);
@@ -60,6 +61,7 @@ private:
     bool m_isSending;
     bool m_isFileOpened;
     bool m_isRepeatSend;
+    QFile m_fileSendedData;
 
     static const qint32 defaultPackageLength;
     static const qint32 defaultPortNumber;
