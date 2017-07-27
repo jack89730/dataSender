@@ -188,6 +188,7 @@ qint32 Widget::sendFile()
    m_fileSendedData.flush();
    m_tcpServer->sendDataToAllClients(ch, readLength);
 
+   ui->progressBar->setValue(calculatePercentage(m_file));
 
    delete[] ch;
 
