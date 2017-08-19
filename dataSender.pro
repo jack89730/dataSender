@@ -33,3 +33,6 @@ HEADERS  += widget.h \
     tcpserver.h
 
 FORMS    += mainWindow.ui
+
+RESOURCES += \
+    images.qrc

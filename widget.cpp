@@ -24,7 +24,7 @@ Widget::Widget(QWidget *parent) :
     m_fileName = QString();
     ui->btn_startListen->setEnabled(false);
     connect(m_tcpServer, TcpServer::connectedAmount, this, updateConnectedSocketAmount);
-
+    setWindowIcon(QIcon(":/images/dataSender.ico"));
     statusChange();
 }
 
