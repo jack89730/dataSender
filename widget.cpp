@@ -23,6 +23,7 @@ Widget::Widget(QWidget *parent) :
     ui->setupUi(this);
     m_fileName = QString();
     ui->btn_startListen->setEnabled(false);
+    connect(m_tcpServer, TcpServer::connectedAmount, this, updateConnectedSocketAmount);
 
     statusChange();
 }
@@ -255,4 +256,16 @@ void Widget::on_btn_stopSend_clicked()
 void Widget::on_checkBox_repeatSend_clicked()
 {
     m_isRepeatSend = ui->checkBox_repeatSend->isChecked();
+}
+
+/*
+ *功能：
+ * 更新当前链接的客户端的数量
+ *输入参数：
+ *输出参数：
+ *返回值：
+*/
+void Widget::updateConnectedSocketAmount(qint32 number)
+{
+    ui->lineEdit_connectedCounts->setText(QString("%1").arg(number));
 }

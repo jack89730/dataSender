@@ -37,6 +37,8 @@ private slots:
 
     void on_checkBox_repeatSend_clicked();
 
+    void updateConnectedSocketAmount(qint32 number);
+
 private:
     bool openFile(const QString &fileName);
     qint32 sendFile();
