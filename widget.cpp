@@ -345,16 +345,23 @@ void Widget::on_btn_startSendData_clicked()
 {
     sendType = Data;
 
-    if(m_isIntervalSend)
+    if(ui->checkBox_repeatSend->isChecked())
     {
-        m_timerId = startTimer(m_sendInterval);
+        if(m_isIntervalSend)
+        {
+            m_timerId = startTimer(m_sendInterval);
+        }
+        else
+        {
+            m_timerId = startTimer(1);
+        }
+
+        m_isSending = true;
     }
     else
     {
-        m_timerId = startTimer(1);
+        sendFile();
     }
-
-    m_isSending = true;
 
     statusChange();
 }
