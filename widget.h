@@ -12,6 +12,11 @@ class Widget : public QWidget
 {
     Q_OBJECT
 
+    enum SendType{
+        File,
+        Data
+    };
+
 public:
     explicit Widget(QWidget *parent = 0);
     ~Widget();
@@ -29,21 +34,30 @@ private slots:
 
     void on_btn_openFile_clicked();
 
-    void on_btn_startSend_clicked();
-
     void on_checkBox_intervalSend_clicked();
-
-    void on_btn_stopSend_clicked();
 
     void on_checkBox_repeatSend_clicked();
 
     void updateConnectedSocketAmount(qint32 number);
+
+    void on_btn_stopSendFile_clicked();
+
+    void on_btn_startSendFile_clicked();
+
+    void on_btn_more_clicked();
+
+    void on_btn_startSendData_clicked();
+
+    void on_plainTextEdit_data_textChanged();
+
+    void on_btn_stopSendData_clicked();
 
 private:
     bool openFile(const QString &fileName);
     qint32 sendFile();
     void statusChange();
     void createFile();
+    char * getPlainTextEditData(int& length);
 
 protected:
     virtual void timerEvent(QTimerEvent *event);
@@ -64,6 +78,7 @@ private:
     bool m_isFileOpened;
     bool m_isRepeatSend;
     QFile m_fileSendedData;
+    SendType sendType;
 
     static const qint32 defaultPackageLength;
     static const qint32 defaultPortNumber;

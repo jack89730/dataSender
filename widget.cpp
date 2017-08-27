@@ -23,8 +23,11 @@ Widget::Widget(QWidget *parent) :
     ui->setupUi(this);
     m_fileName = QString();
     ui->btn_startListen->setEnabled(false);
+    ui->btn_startSendData->setEnabled(false);
+
     connect(m_tcpServer, TcpServer::connectedAmount, this, updateConnectedSocketAmount);
     setWindowIcon(QIcon(":/images/dataSender.ico"));
+    setWindowFlag(Qt::WindowMaximizeButtonHint, false);
     statusChange();
 }
 
@@ -129,8 +132,10 @@ void Widget::timerEvent(QTimerEvent *event)
     sendFile();
 }
 
-void Widget::on_btn_startSend_clicked()
+void Widget::on_btn_startSendFile_clicked()
 {
+    sendType = File;
+
     if(m_fileName.isEmpty())
     {
         showWarningBox(tr("警告"), tr("没有要传输的文件"));
@@ -157,43 +162,67 @@ void Widget::on_checkBox_intervalSend_clicked()
 
 qint32 Widget::sendFile()
 {
-    char *ch = new char[m_packageLength];
-    qint32 readLength = 0;
+    if(File == sendType)
+    {
+        char *ch = new char[m_packageLength];
+        qint32 readLength = 0;
 
-   readLength = m_inStream.readRawData(ch, m_packageLength);
+       readLength = m_inStream.readRawData(ch, m_packageLength);
 
-   qDebug() << readLength;
-   if(-1 == readLength)
-   {
-       return -1;
-   }
-
-   if(0 == readLength)
-   {
-       if(m_isRepeatSend)
+       qDebug() << readLength;
+       if(-1 == readLength)
        {
-           m_file.seek(0);
-           readLength = m_inStream.readRawData(ch, m_packageLength);
+           return -1;
        }
-       else
+
+       if(0 == readLength)
        {
-           return 0;
+           if(m_isRepeatSend)
+           {
+               m_file.seek(0);
+               readLength = m_inStream.readRawData(ch, m_packageLength);
+           }
+           else
+           {
+               return 0;
+           }
        }
-   }
 
-   /*
-    * 将发送的数据存储到本地
-*/
-   QDataStream out(&m_fileSendedData);
-   out.writeRawData(ch, readLength);
-   m_fileSendedData.flush();
-   m_tcpServer->sendDataToAllClients(ch, readLength);
+       /*
+        * 将发送的数据存储到本地
+        */
+       QDataStream out(&m_fileSendedData);
+       out.writeRawData(ch, readLength);
+       m_fileSendedData.flush();
+       m_tcpServer->sendDataToAllClients(ch, readLength);
 
-   ui->progressBar->setValue(calculatePercentage(m_file));
+       ui->progressBar->setValue(calculatePercentage(m_file));
 
-   delete[] ch;
+       delete[] ch;
 
-   return readLength;
+       return readLength;
+    }
+
+    if(Data == sendType)
+    {
+        char * ch = NULL;
+        int length;
+
+        ch = getPlainTextEditData(length);
+
+        if(NULL == ch)
+        {
+            delete[] ch;
+            return 0;
+        }
+
+        m_tcpServer->sendDataToAllClients(ch, length);
+
+        delete[] ch;
+        return length;
+    }
+
+    return 0;
 }
 
 void Widget::statusChange()
@@ -202,20 +231,20 @@ void Widget::statusChange()
 
     if((!m_isSending) && (m_isFileOpened))
     {
-        ui->btn_startSend->setEnabled(true);
+        ui->btn_startSendFile->setEnabled(true);
     }
     else
     {
-        ui->btn_startSend->setEnabled(false);
+        ui->btn_startSendFile->setEnabled(false);
     }
 
     if(m_isSending)
     {
-        ui->btn_stopSend->setEnabled(true);
+        ui->btn_stopSendFile->setEnabled(true);
     }
     else
     {
-        ui->btn_stopSend->setEnabled(false);
+        ui->btn_stopSendFile->setEnabled(false);
     }
 
     if(m_isSending)
@@ -229,9 +258,10 @@ void Widget::statusChange()
 
     if(m_fileName.isEmpty())
     {
-        ui->btn_startSend->setEnabled(false);
-        ui->btn_stopSend->setEnabled(false);
+        ui->btn_startSendFile->setEnabled(false);
+        ui->btn_stopSendFile->setEnabled(false);
     }
+
 }
 
 void Widget::createFile()
@@ -246,7 +276,29 @@ void Widget::createFile()
     }
 }
 
-void Widget::on_btn_stopSend_clicked()
+char *Widget::getPlainTextEditData(int &length)
+{
+    QString str = ui->plainTextEdit_data->toPlainText();
+
+    if(str.isEmpty())
+    {
+        showWarningBox("警告", "数据为空");
+        return NULL;
+    }
+
+    QByteArray bya = str.toLocal8Bit();
+
+    qDebug() << __FILE__  << __func__ << str;
+    qDebug() << __FILE__  << __func__ << bya.data();
+
+    length = bya.length();
+
+    char *data = new char[bya.size()];
+    strcpy(data, bya.data());
+    return data;
+}
+
+void Widget::on_btn_stopSendFile_clicked()
 {
     killTimer(m_timerId);
     m_isSending = false;
@@ -268,4 +320,60 @@ void Widget::on_checkBox_repeatSend_clicked()
 void Widget::updateConnectedSocketAmount(qint32 number)
 {
     ui->lineEdit_connectedCounts->setText(QString("%1").arg(number));
+}
+
+
+
+/*
+ *功能：
+ *  显示与隐藏右侧发送数据面板
+ *输入参数：
+ *  无
+ *输出参数：
+ *  无
+ *返回值：
+ *  无
+*/
+void Widget::on_btn_more_clicked()
+{
+    static bool flag = true;
+    flag = !flag;
+    ui->frame_rightPanel->setVisible(flag);
+}
+
+void Widget::on_btn_startSendData_clicked()
+{
+    sendType = Data;
+
+    if(m_isIntervalSend)
+    {
+        m_timerId = startTimer(m_sendInterval);
+    }
+    else
+    {
+        m_timerId = startTimer(1);
+    }
+
+    m_isSending = true;
+
+    statusChange();
+}
+
+void Widget::on_plainTextEdit_data_textChanged()
+{
+    if(!(ui->plainTextEdit_data->toPlainText().isEmpty()))
+    {
+        ui->btn_startSendData->setDisabled(false);
+    }
+    else
+    {
+        ui->btn_startSendData->setDisabled(true);
+    }
+}
+
+void Widget::on_btn_stopSendData_clicked()
+{
+    killTimer(m_timerId);
+    m_isSending = false;
+    statusChange();
 }
